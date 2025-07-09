@@ -1,0 +1,27 @@
+{
+  "name": "message-center",
+  "version": "1.0.0",
+  "description": "Modern Message Center with React, TypeScript, and Styled Components",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "client:dev": "cd client && npm start",
+    "server:dev": "cd server && npm run dev",
+    "build": "cd client && npm run build",
+    "test": "cd client && npm test",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  },
+  "author": "Message Center Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Middeaslam/Message-center/issues"
+  },
+  "homepage": "https://github.com/Middeaslam/Message-center#readme"
+}
