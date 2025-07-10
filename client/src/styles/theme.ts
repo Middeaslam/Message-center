@@ -1,3 +1,10 @@
+const breakpoints = {
+  sm: '640px',
+  md: '768px',
+  lg: '1024px',
+  xl: '1280px'
+};
+
 export const theme = {
   colors: {
     primary: '#3b82f6',
@@ -70,11 +77,15 @@ export const theme = {
     fast: '100ms ease-in-out',
     slow: '300ms ease-in-out'
   },
-  breakpoints: {
-    sm: '640px',
-    md: '768px',
-    lg: '1024px',
-    xl: '1280px'
+  breakpoints,
+  mobile: {
+    sidebarWidth: '280px', // Slightly wider on mobile for better touch targets
+    headerHeight: '56px' // Shorter header on mobile
+  },
+  // Add media query helpers
+  media: {
+    mobile: `@media (max-width: ${breakpoints.md})`,
+    desktop: `@media (min-width: ${breakpoints.md})`
   }
 };
 

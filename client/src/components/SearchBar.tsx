@@ -10,6 +10,10 @@ const SearchContainer = styled.div`
   position: relative;
   flex: 1;
   max-width: 400px;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    max-width: none;
+  }
 `;
 
 const SearchInput = styled.input`
@@ -31,6 +35,12 @@ const SearchInput = styled.input`
   &::placeholder {
     color: ${({ theme }) => theme.colors.text.muted};
   }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: ${({ theme }) => theme.spacing.md}
+      ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.md} 36px;
+  }
 `;
 
 const SearchIcon = styled.div`
@@ -40,6 +50,10 @@ const SearchIcon = styled.div`
   transform: translateY(-50%);
   color: ${({ theme }) => theme.colors.text.muted};
   pointer-events: none;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    left: ${({ theme }) => theme.spacing.sm};
+  }
 `;
 
 const ActionButton = styled.button<{ $isVisible: boolean }>`
@@ -66,6 +80,10 @@ const ActionButton = styled.button<{ $isVisible: boolean }>`
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    right: ${({ theme }) => theme.spacing.sm};
   }
 `;
 

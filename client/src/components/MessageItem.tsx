@@ -12,6 +12,7 @@ import { Message, MessageType } from '../types';
 import React from 'react';
 import styled from 'styled-components';
 
+// Update MessageContainer with better mobile spacing
 const MessageContainer = styled.div<{ $isRead: boolean }>`
   display: flex;
   padding: ${({ theme }) => theme.spacing.lg};
@@ -20,6 +21,7 @@ const MessageContainer = styled.div<{ $isRead: boolean }>`
     $isRead ? theme.colors.background : theme.colors.unreadBg};
   cursor: pointer;
   transition: all ${({ theme }) => theme.transitions.default};
+  min-height: 80px; /* Better touch targets */
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.backgroundSecondary};
@@ -29,6 +31,17 @@ const MessageContainer = styled.div<{ $isRead: boolean }>`
 
   &:last-child {
     border-bottom: none;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    padding: ${({ theme }) => theme.spacing.md};
+    min-height: 88px; /* Larger touch targets on mobile */
+  }
+
+  /* Better focus states for mobile */
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline-offset: -2px;
   }
 `;
 
@@ -63,6 +76,7 @@ const SenderInfo = styled.div`
   flex: 1;
 `;
 
+// Update text sizes for mobile
 const Sender = styled.span<{ $isRead: boolean }>`
   font-weight: ${({ theme, $isRead }) =>
     $isRead
@@ -70,6 +84,10 @@ const Sender = styled.span<{ $isRead: boolean }>`
       : theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    font-size: ${({ theme }) => theme.typography.fontSize.base};
+  }
 `;
 
 const PriorityIcon = styled.div<{ $priority: 'high' | 'medium' | 'low' }>`
@@ -112,7 +130,6 @@ const Timestamp = styled.span`
   color: ${({ theme }) => theme.colors.text.muted};
   white-space: nowrap;
 `;
-
 const Subject = styled.h3<{ $isRead: boolean }>`
   font-size: ${({ theme }) => theme.typography.fontSize.base};
   font-weight: ${({ theme, $isRead }) =>
@@ -122,6 +139,11 @@ const Subject = styled.h3<{ $isRead: boolean }>`
   color: ${({ theme }) => theme.colors.text.primary};
   margin-bottom: ${({ theme }) => theme.spacing.xs};
   line-height: ${({ theme }) => theme.typography.lineHeight.tight};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    font-size: ${({ theme }) => theme.typography.fontSize.lg};
+    margin-bottom: ${({ theme }) => theme.spacing.sm};
+  }
 `;
 
 const Preview = styled.p`
@@ -133,6 +155,11 @@ const Preview = styled.p`
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    font-size: ${({ theme }) => theme.typography.fontSize.base};
+    -webkit-line-clamp: 1;
+  }
 `;
 
 interface MessageItemProps {
