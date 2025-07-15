@@ -1,4 +1,4 @@
-import { ApiResponse, Message, NewMessageData } from '../types';
+import { ApiResponse, Message, MessageTemplate, NewMessageData, Vendor } from '../types';
 
 import axios from 'axios';
 
@@ -8,6 +8,19 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000
 });
+
+// Response interceptor to handle errors consistently
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.data) {
+      // If the server returned an error response, throw the server's error message
+      throw error.response.data;
+    }
+    // Otherwise, throw the original error
+    throw error;
+  }
+);
 
 export const getMessages = async (
   filter?: string,
@@ -47,4 +60,14 @@ export const sendMessage = async (
 
 export const deleteMessage = async (id: string): Promise<void> => {
   await api.delete(`/messages/${id}`);
+};
+
+export const getVendors = async (): Promise<Vendor[]> => {
+  const response = await api.get('/vendors');
+  return response.data;
+};
+
+export const getMessageTemplates = async (): Promise<MessageTemplate[]> => {
+  const response = await api.get('/templates');
+  return response.data;
 };

@@ -195,13 +195,25 @@ const messageSlice = createSlice({
         }
       )
 
+      .addCase(sendMessage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(
         sendMessage.fulfilled,
         (state, action: PayloadAction<Message>) => {
+          state.loading = false;
           state.messages.unshift(action.payload);
           state.totalCount += 1;
         }
       )
+      .addCase(sendMessage.rejected, (state, action) => {
+        state.loading = false;
+        state.error =
+          (action.payload as string) ||
+          action.error.message ||
+          'Failed to send message';
+      })
 
       .addCase(
         deleteMessage.fulfilled,

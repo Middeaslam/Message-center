@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 
 import { MessageItem } from './MessageItem';
+import { NewMessageModal } from './NewMessageModal';
 import { fetchMessages } from '../slices/messageSlice';
 import styled from 'styled-components';
 import { throttle } from '../utils/throttle';
@@ -194,6 +195,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   const [page, setPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
 
   // Throttled refresh function
   const throttledRefresh = useCallback(
@@ -254,6 +256,14 @@ export const MessageList: React.FC<MessageListProps> = ({
   const handleRetry = useCallback(() => {
     throttledRefresh();
   }, [throttledRefresh]);
+
+  const handleNewMessageClick = () => {
+    setIsNewMessageModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsNewMessageModalOpen(false);
+  };
 
   const getDisplayTitle = () => {
     if (currentView === 'sent') return 'Sent Messages';
@@ -350,18 +360,25 @@ export const MessageList: React.FC<MessageListProps> = ({
   };
 
   return (
-    <Container>
-      <Header>
-        <HeaderLeft>
-          <Title>{getDisplayTitle()}</Title>
-          <MessageCount>{getMessageCount()}</MessageCount>
-        </HeaderLeft>
-        <NewMessageButton>
-          <Plus size={16} />
-          New Message
-        </NewMessageButton>
-      </Header>
-      {renderContent()}
-    </Container>
+    <>
+      <Container>
+        <Header>
+          <HeaderLeft>
+            <Title>{getDisplayTitle()}</Title>
+            <MessageCount>{getMessageCount()}</MessageCount>
+          </HeaderLeft>
+          <NewMessageButton onClick={handleNewMessageClick}>
+            <Plus size={16} />
+            New Message
+          </NewMessageButton>
+        </Header>
+        {renderContent()}
+      </Container>
+      
+      <NewMessageModal
+        isOpen={isNewMessageModalOpen}
+        onClose={handleCloseModal}
+      />
+    </>
   );
 };
