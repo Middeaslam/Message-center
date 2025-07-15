@@ -178,8 +178,8 @@ export const Header: React.FC<HeaderProps> = ({
         <SearchBar currentView={currentView} />
       </LeftSection>
       <RightSection>
-        {/* Only show filter dropdown for inbox */}
-        {currentView === 'inbox' && <FilterDropdown />}
+        {/* Show filter dropdown for both inbox and sent */}
+        <FilterDropdown currentView={currentView} />
       </RightSection>
     </HeaderContainer>
   );

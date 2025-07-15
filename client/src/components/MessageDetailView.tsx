@@ -2,6 +2,7 @@ import {
   AlertCircle,
   Archive,
   Calendar,
+  CheckCircle,
   Clock,
   Forward,
   Mail,
@@ -11,12 +12,13 @@ import {
   ReplyAll,
   Star,
   Trash2,
-  User
+  User,
+  X
 } from 'lucide-react';
 import React, { useEffect } from 'react';
 
 import { Message } from '../types';
-import { markAsRead } from '../slices/messageSlice';
+import { markAsAcknowledged, markAsRead, markAsUnacknowledged } from '../slices/messageSlice';
 import styled from 'styled-components';
 import { useAppDispatch } from '../store/hooks';
 
@@ -196,6 +198,16 @@ export const MessageDetailView: React.FC<MessageDetailViewProps> = ({
     }
   }, [message, dispatch]);
 
+  const handleToggleAcknowledgment = () => {
+    if (!message) return;
+    
+    if (message.isAcknowledged) {
+      dispatch(markAsUnacknowledged(message.id));
+    } else {
+      dispatch(markAsAcknowledged(message.id));
+    }
+  };
+
   if (!message) {
     return (
       <Container>
@@ -256,6 +268,21 @@ export const MessageDetailView: React.FC<MessageDetailViewProps> = ({
             <Star size={16} />
             Star
           </ActionButton>
+          {message.type === 'sent' && (
+            <ActionButton onClick={handleToggleAcknowledgment}>
+              {message.isAcknowledged ? (
+                <>
+                  <X size={16} />
+                  Mark Unacknowledged
+                </>
+              ) : (
+                <>
+                  <CheckCircle size={16} />
+                  Mark Acknowledged
+                </>
+              )}
+            </ActionButton>
+          )}
           <ActionButton>
             <Archive size={16} />
             Archive

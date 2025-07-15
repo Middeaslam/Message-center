@@ -1,5 +1,6 @@
 import {
   AlertCircle,
+  CheckCircle,
   CheckCircle2,
   Clock,
   Mail,
@@ -253,6 +254,11 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               {message.isRead && (
                 <IconWrapper>
                   <CheckCircle2 size={14} />
+                </IconWrapper>
+              )}
+              {currentView === 'sent' && message.isAcknowledged && (
+                <IconWrapper title="Acknowledged">
+                  <CheckCircle size={14} style={{ color: '#10b981' }} />
                 </IconWrapper>
               )}
               {currentView === 'sent' && (

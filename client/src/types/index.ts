@@ -10,6 +10,8 @@ export interface Message {
   hasAttachment: boolean;
   recipient?: string;
   recipientEmail?: string;
+  isAcknowledged?: boolean; // For sent messages
+  type?: 'inbox' | 'sent';
 }
 
 export interface ApiResponse {
@@ -45,11 +47,15 @@ export interface MessagesState {
   selectedMessage: Message | null;
   loading: boolean;
   error: string | null;
-  filter: 'all' | 'unread' | 'read';
+  filter: 'all' | 'unread' | 'read' | 'acknowledged';
   searchTerm: string;
   totalCount: number;
   unreadCount: number;
 }
+
+// Filter options for different views
+export type InboxFilter = 'all' | 'read' | 'unread';
+export type SentFilter = 'all' | 'read' | 'acknowledged';
 
 // New view state types
 export type ViewState = 'list' | 'detail';

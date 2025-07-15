@@ -148,6 +148,7 @@ let messages = [
     timestamp: '2025-01-21T17:30:00Z',
     isRead: true,
     hasAttachment: true,
+    isAcknowledged: true,
     type: 'sent'
   },
   {
@@ -163,6 +164,7 @@ let messages = [
     timestamp: '2025-01-20T15:45:00Z',
     isRead: true,
     hasAttachment: false,
+    isAcknowledged: true,
     type: 'sent'
   },
   {
@@ -178,6 +180,7 @@ let messages = [
     timestamp: '2025-01-19T09:20:00Z',
     isRead: true,
     hasAttachment: false,
+    isAcknowledged: false,
     type: 'sent'
   },
   {
@@ -193,6 +196,7 @@ let messages = [
     timestamp: '2025-01-18T14:15:00Z',
     isRead: true,
     hasAttachment: true,
+    isAcknowledged: false,
     type: 'sent'
   }
 ];
@@ -215,12 +219,20 @@ app.get('/api/messages', (req, res) => {
   // Filter by type (inbox or sent)
   filteredMessages = messages.filter((msg) => msg.type === type);
 
-  // Apply read/unread filter (only for inbox)
-  if (type === 'inbox' && filter !== 'all') {
-    if (filter === 'unread') {
-      filteredMessages = filteredMessages.filter((msg) => !msg.isRead);
-    } else if (filter === 'read') {
-      filteredMessages = filteredMessages.filter((msg) => msg.isRead);
+  // Apply filters based on message type
+  if (filter !== 'all') {
+    if (type === 'inbox') {
+      if (filter === 'unread') {
+        filteredMessages = filteredMessages.filter((msg) => !msg.isRead);
+      } else if (filter === 'read') {
+        filteredMessages = filteredMessages.filter((msg) => msg.isRead);
+      }
+    } else if (type === 'sent') {
+      if (filter === 'read') {
+        filteredMessages = filteredMessages.filter((msg) => msg.isRead);
+      } else if (filter === 'acknowledged') {
+        filteredMessages = filteredMessages.filter((msg) => msg.isAcknowledged);
+      }
     }
   }
 
@@ -285,6 +297,38 @@ app.patch('/api/messages/:id/unread', (req, res) => {
   res.json(messages[messageIndex]);
 });
 
+app.patch('/api/messages/:id/acknowledged', (req, res) => {
+  const messageIndex = messages.findIndex((msg) => msg.id === req.params.id);
+
+  if (messageIndex === -1) {
+    return res.status(404).json({ error: 'Message not found' });
+  }
+
+  // Only sent messages can be acknowledged
+  if (messages[messageIndex].type !== 'sent') {
+    return res.status(400).json({ error: 'Only sent messages can be acknowledged' });
+  }
+
+  messages[messageIndex].isAcknowledged = true;
+  res.json(messages[messageIndex]);
+});
+
+app.patch('/api/messages/:id/unacknowledged', (req, res) => {
+  const messageIndex = messages.findIndex((msg) => msg.id === req.params.id);
+
+  if (messageIndex === -1) {
+    return res.status(404).json({ error: 'Message not found' });
+  }
+
+  // Only sent messages can be unacknowledged
+  if (messages[messageIndex].type !== 'sent') {
+    return res.status(400).json({ error: 'Only sent messages can be unacknowledged' });
+  }
+
+  messages[messageIndex].isAcknowledged = false;
+  res.json(messages[messageIndex]);
+});
+
 app.post('/api/messages', (req, res) => {
   try {
     const { recipient, vendorId, subject, content, priority = 'medium' } = req.body;
@@ -342,6 +386,7 @@ app.post('/api/messages', (req, res) => {
       timestamp: new Date().toISOString(),
       isRead: true,
       hasAttachment: false,
+      isAcknowledged: false, // New messages start as not acknowledged
       type: 'sent'
     };
 

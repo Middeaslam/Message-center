@@ -3,6 +3,7 @@ import { fetchMessages, setFilter } from '../slices/messageSlice';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 
 import { ChevronDown } from 'lucide-react';
+import { MessageType } from '../types';
 import styled from 'styled-components';
 
 const DropdownContainer = styled.div`
@@ -89,22 +90,33 @@ const ChevronIcon = styled.div<{ $isOpen: boolean }>`
 `;
 
 interface FilterOption {
-  value: 'all' | 'read' | 'unread';
+  value: 'all' | 'read' | 'unread' | 'acknowledged';
   label: string;
 }
 
-const filterOptions: FilterOption[] = [
+const inboxFilterOptions: FilterOption[] = [
   { value: 'all', label: 'All' },
   { value: 'unread', label: 'Unread' },
   { value: 'read', label: 'Read' }
 ];
 
-export const FilterDropdown: React.FC = () => {
+const sentFilterOptions: FilterOption[] = [
+  { value: 'all', label: 'All' },
+  { value: 'read', label: 'Sent Read' },
+  { value: 'acknowledged', label: 'Acknowledged' }
+];
+
+interface FilterDropdownProps {
+  currentView: MessageType;
+}
+
+export const FilterDropdown: React.FC<FilterDropdownProps> = ({ currentView }) => {
   const dispatch = useAppDispatch();
   const { filter, searchTerm } = useAppSelector((state) => state.messages);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const filterOptions = currentView === 'inbox' ? inboxFilterOptions : sentFilterOptions;
   const currentFilterLabel =
     filterOptions.find((option) => option.value === filter)?.label || 'All';
 
@@ -122,9 +134,13 @@ export const FilterDropdown: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleFilterChange = (newFilter: 'all' | 'read' | 'unread') => {
+  const handleFilterChange = (newFilter: 'all' | 'read' | 'unread' | 'acknowledged') => {
     dispatch(setFilter(newFilter));
-    dispatch(fetchMessages({ filter: newFilter, search: searchTerm }));
+    dispatch(fetchMessages({ 
+      filter: newFilter, 
+      search: searchTerm, 
+      type: currentView 
+    }));
     setIsOpen(false);
   };
 

@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 
 import { MessageItem } from './MessageItem';
 import { NewMessageModal } from './NewMessageModal';
-import { fetchMessages } from '../slices/messageSlice';
+import { fetchMessages, setFilter } from '../slices/messageSlice';
 import styled from 'styled-components';
 import { throttle } from '../utils/throttle';
 import { useScrollPagination } from '../hooks/useScrollPagination';
@@ -211,13 +211,18 @@ export const MessageList: React.FC<MessageListProps> = ({
     [dispatch, currentView, filter, searchTerm]
   );
 
+  // Reset filter when view changes
+  useEffect(() => {
+    dispatch(setFilter('all'));
+  }, [currentView, dispatch]);
+
   // Reset pagination when view or filters change
   useEffect(() => {
     setPage(1);
     setHasMore(true);
     dispatch(
       fetchMessages({
-        filter: currentView === 'sent' ? undefined : filter,
+        filter: filter,
         search: searchTerm,
         type: currentView
       })
