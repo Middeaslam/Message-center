@@ -99,11 +99,33 @@ export const deleteMessage = createAsyncThunk(
   }
 );
 
+export const markAsAcknowledged = createAsyncThunk(
+  'messages/markAsAcknowledged',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      return await messageAPI.markAsAcknowledged(id);
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to mark as acknowledged');
+    }
+  }
+);
+
+export const markAsUnacknowledged = createAsyncThunk(
+  'messages/markAsUnacknowledged',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      return await messageAPI.markAsUnacknowledged(id);
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to mark as unacknowledged');
+    }
+  }
+);
+
 const messageSlice = createSlice({
   name: 'messages',
   initialState,
   reducers: {
-    setFilter: (state, action: PayloadAction<'all' | 'unread' | 'read'>) => {
+    setFilter: (state, action: PayloadAction<'all' | 'unread' | 'read' | 'acknowledged'>) => {
       state.filter = action.payload;
     },
     setSearchTerm: (state, action: PayloadAction<string>) => {
@@ -215,25 +237,55 @@ const messageSlice = createSlice({
           'Failed to send message';
       })
 
-      .addCase(
-        deleteMessage.fulfilled,
-        (state, action: PayloadAction<string>) => {
-          const messageIndex = state.messages.findIndex(
-            (msg) => msg.id === action.payload
-          );
-          if (messageIndex !== -1) {
-            const deletedMessage = state.messages[messageIndex];
-            state.messages.splice(messageIndex, 1);
-            state.totalCount -= 1;
-            if (!deletedMessage.isRead) {
-              state.unreadCount -= 1;
+              .addCase(
+          deleteMessage.fulfilled,
+          (state, action: PayloadAction<string>) => {
+            const messageIndex = state.messages.findIndex(
+              (msg) => msg.id === action.payload
+            );
+            if (messageIndex !== -1) {
+              const deletedMessage = state.messages[messageIndex];
+              state.messages.splice(messageIndex, 1);
+              state.totalCount -= 1;
+              if (!deletedMessage.isRead) {
+                state.unreadCount -= 1;
+              }
+            }
+            if (state.selectedMessage?.id === action.payload) {
+              state.selectedMessage = null;
             }
           }
-          if (state.selectedMessage?.id === action.payload) {
-            state.selectedMessage = null;
+        )
+
+        .addCase(
+          markAsAcknowledged.fulfilled,
+          (state, action: PayloadAction<Message>) => {
+            const index = state.messages.findIndex(
+              (msg) => msg.id === action.payload.id
+            );
+            if (index !== -1) {
+              state.messages[index] = action.payload;
+            }
+            if (state.selectedMessage?.id === action.payload.id) {
+              state.selectedMessage = action.payload;
+            }
           }
-        }
-      );
+        )
+
+        .addCase(
+          markAsUnacknowledged.fulfilled,
+          (state, action: PayloadAction<Message>) => {
+            const index = state.messages.findIndex(
+              (msg) => msg.id === action.payload.id
+            );
+            if (index !== -1) {
+              state.messages[index] = action.payload;
+            }
+            if (state.selectedMessage?.id === action.payload.id) {
+              state.selectedMessage = action.payload;
+            }
+          }
+        );
   }
 });
 

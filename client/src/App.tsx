@@ -99,6 +99,8 @@ function App() {
     setViewState('list');
     setSelectedMessage(null);
     setSidebarOpen(false); // Close sidebar on mobile when changing views
+    // Reset filter to 'all' when changing views
+    // This will be handled by the components when they detect view change
   };
 
   const toggleSidebar = () => {

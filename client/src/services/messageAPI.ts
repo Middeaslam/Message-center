@@ -71,3 +71,13 @@ export const getMessageTemplates = async (): Promise<MessageTemplate[]> => {
   const response = await api.get('/templates');
   return response.data;
 };
+
+export const markAsAcknowledged = async (id: string): Promise<Message> => {
+  const response = await api.patch(`/messages/${id}/acknowledged`);
+  return response.data;
+};
+
+export const markAsUnacknowledged = async (id: string): Promise<Message> => {
+  const response = await api.patch(`/messages/${id}/unacknowledged`);
+  return response.data;
+};
