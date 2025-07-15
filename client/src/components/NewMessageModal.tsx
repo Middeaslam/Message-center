@@ -1,7 +1,9 @@
-import { Paperclip, Send, X } from 'lucide-react';
+import { FileText, Paperclip, Send, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { NewMessageData } from '../types';
+import { MessageTemplate, NewMessageData, Vendor } from '../types';
+import * as messageAPI from '../services/messageAPI';
+
 import { sendMessage } from '../slices/messageSlice';
 import styled from 'styled-components';
 import { useAppDispatch } from '../store/hooks';
@@ -201,6 +203,91 @@ const GeneralErrorMessage = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.lg};
 `;
 
+const TemplateSection = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.lg};
+  background-color: ${({ theme }) => theme.colors.backgroundSecondary};
+  border-radius: ${({ theme }) => theme.layout.borderRadiusSm};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
+const TemplateHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+`;
+
+const TemplateTitle = styled.h3`
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0;
+`;
+
+const TemplateGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: ${({ theme }) => theme.spacing.sm};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+`;
+
+const TemplateButton = styled.button`
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.layout.borderRadiusSm};
+  background-color: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  cursor: pointer;
+  transition: all ${({ theme }) => theme.transitions.default};
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    background-color: ${({ theme }) => theme.colors.primary}10;
+    color: ${({ theme }) => theme.colors.primary};
+  }
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary}20;
+  }
+`;
+
+const RecipientTypeToggle = styled.div`
+  display: flex;
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.layout.borderRadiusSm};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  overflow: hidden;
+`;
+
+const ToggleButton = styled.button<{ $isActive: boolean }>`
+  flex: 1;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  border: none;
+  background-color: ${({ theme, $isActive }) =>
+    $isActive ? theme.colors.primary : theme.colors.background};
+  color: ${({ theme, $isActive }) =>
+    $isActive ? theme.colors.background : theme.colors.text.primary};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  cursor: pointer;
+  transition: all ${({ theme }) => theme.transitions.default};
+
+  &:hover {
+    background-color: ${({ theme, $isActive }) =>
+      $isActive ? theme.colors.primaryHover : theme.colors.backgroundSecondary};
+  }
+`;
+
 const ModalFooter = styled.div`
   display: flex;
   align-items: center;
@@ -300,7 +387,9 @@ interface NewMessageModalProps {
 }
 
 interface FormData {
-  recipient: string;
+  recipientType: 'vendor' | 'custom';
+  vendorId: string;
+  customRecipient: string;
   subject: string;
   content: string;
   priority: 'high' | 'medium' | 'low';
@@ -319,19 +408,48 @@ export const NewMessageModal: React.FC<NewMessageModalProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState<FormData>({
-    recipient: '',
+    recipientType: 'vendor',
+    vendorId: '',
+    customRecipient: '',
     subject: '',
     content: '',
     priority: 'medium'
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+  const [loadingData, setLoadingData] = useState(false);
+
+  // Load vendors and templates when modal opens
+  useEffect(() => {
+    if (isOpen && vendors.length === 0) {
+      const loadData = async () => {
+        setLoadingData(true);
+        try {
+          const [vendorsData, templatesData] = await Promise.all([
+            messageAPI.getVendors(),
+            messageAPI.getMessageTemplates()
+          ]);
+          setVendors(vendorsData);
+          setTemplates(templatesData);
+        } catch (error) {
+          console.error('Failed to load vendors and templates:', error);
+        } finally {
+          setLoadingData(false);
+        }
+      };
+      loadData();
+    }
+  }, [isOpen, vendors.length]);
 
   // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       setFormData({
-        recipient: '',
+        recipientType: 'vendor',
+        vendorId: vendors.length > 0 ? vendors[0].id : '',
+        customRecipient: '',
         subject: '',
         content: '',
         priority: 'medium'
@@ -339,7 +457,7 @@ export const NewMessageModal: React.FC<NewMessageModalProps> = ({
       setErrors({});
       setIsSubmitting(false);
     }
-  }, [isOpen]);
+  }, [isOpen, vendors]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -374,13 +492,27 @@ export const NewMessageModal: React.FC<NewMessageModalProps> = ({
     }
   };
 
+  const applyTemplate = (template: MessageTemplate) => {
+    setFormData(prev => ({
+      ...prev,
+      subject: template.subject,
+      content: template.content
+    }));
+  };
+
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.recipient.trim()) {
-      newErrors.recipient = 'Recipient is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.recipient.trim())) {
-      newErrors.recipient = 'Please enter a valid email address';
+    if (formData.recipientType === 'vendor') {
+      if (!formData.vendorId) {
+        newErrors.recipient = 'Please select a vendor';
+      }
+    } else {
+      if (!formData.customRecipient.trim()) {
+        newErrors.recipient = 'Recipient is required';
+      } else if (!/\S+@\S+\.\S+/.test(formData.customRecipient.trim())) {
+        newErrors.recipient = 'Please enter a valid email address';
+      }
     }
 
     if (!formData.subject.trim()) {
@@ -407,11 +539,16 @@ export const NewMessageModal: React.FC<NewMessageModalProps> = ({
 
     try {
       const messageData: NewMessageData = {
-        recipient: formData.recipient.trim(),
         subject: formData.subject.trim(),
         content: formData.content.trim(),
         priority: formData.priority
       };
+
+      if (formData.recipientType === 'vendor') {
+        messageData.vendorId = formData.vendorId;
+      } else {
+        messageData.recipient = formData.customRecipient.trim();
+      }
 
       await dispatch(sendMessage(messageData)).unwrap();
       onClose();
@@ -468,18 +605,80 @@ export const NewMessageModal: React.FC<NewMessageModalProps> = ({
                 {errors.general}
               </GeneralErrorMessage>
             )}
+
+            {/* Quick Templates Section */}
+            {!loadingData && templates.length > 0 && (
+              <TemplateSection>
+                <TemplateHeader>
+                  <FileText size={16} />
+                  <TemplateTitle>Quick Templates</TemplateTitle>
+                </TemplateHeader>
+                <TemplateGrid>
+                  {templates.map((template) => (
+                    <TemplateButton
+                      key={template.id}
+                      type='button'
+                      onClick={() => applyTemplate(template)}
+                      title={template.name}
+                    >
+                      {template.name}
+                    </TemplateButton>
+                  ))}
+                </TemplateGrid>
+              </TemplateSection>
+            )}
             
             <FormField>
-              <Label htmlFor='recipient'>To *</Label>
-              <Input
-                id='recipient'
-                name='recipient'
-                type='email'
-                value={formData.recipient}
-                onChange={handleInputChange}
-                placeholder='Enter recipient email address'
-                autoComplete='email'
-              />
+              <Label>To *</Label>
+              <RecipientTypeToggle>
+                <ToggleButton
+                  type='button'
+                  $isActive={formData.recipientType === 'vendor'}
+                  onClick={() => setFormData(prev => ({ ...prev, recipientType: 'vendor' }))}
+                >
+                  Select Vendor
+                </ToggleButton>
+                <ToggleButton
+                  type='button'
+                  $isActive={formData.recipientType === 'custom'}
+                  onClick={() => setFormData(prev => ({ ...prev, recipientType: 'custom' }))}
+                >
+                  Custom Email
+                </ToggleButton>
+              </RecipientTypeToggle>
+              
+              {formData.recipientType === 'vendor' ? (
+                <Select
+                  id='vendorId'
+                  name='vendorId'
+                  value={formData.vendorId}
+                  onChange={handleInputChange}
+                  disabled={loadingData || vendors.length === 0}
+                >
+                  {vendors.length === 0 ? (
+                    <option value=''>Loading vendors...</option>
+                  ) : (
+                    <>
+                      <option value=''>Select a vendor</option>
+                      {vendors.map((vendor) => (
+                        <option key={vendor.id} value={vendor.id}>
+                          {vendor.name} ({vendor.category})
+                        </option>
+                      ))}
+                    </>
+                  )}
+                </Select>
+              ) : (
+                <Input
+                  id='customRecipient'
+                  name='customRecipient'
+                  type='email'
+                  value={formData.customRecipient}
+                  onChange={handleInputChange}
+                  placeholder='Enter recipient email address'
+                  autoComplete='email'
+                />
+              )}
               {errors.recipient && (
                 <ErrorMessage>{errors.recipient}</ErrorMessage>
               )}

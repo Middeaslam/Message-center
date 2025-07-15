@@ -8,6 +8,58 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
+// Vendor data
+const vendors = [
+  { id: 'vendor1', name: 'TechCorp Solutions', email: 'contact@techcorp.com', category: 'Technology' },
+  { id: 'vendor2', name: 'Office Supplies Plus', email: 'orders@officesupplies.com', category: 'Office Supplies' },
+  { id: 'vendor3', name: 'Marketing Pro Agency', email: 'hello@marketingpro.com', category: 'Marketing' },
+  { id: 'vendor4', name: 'CloudServe Inc', email: 'support@cloudserve.com', category: 'Cloud Services' },
+  { id: 'vendor5', name: 'PrintMaster Co', email: 'service@printmaster.com', category: 'Printing' },
+  { id: 'vendor6', name: 'SecureIT Systems', email: 'info@secureit.com', category: 'Security' },
+  { id: 'vendor7', name: 'CleanSpace Services', email: 'booking@cleanspace.com', category: 'Facility Management' },
+  { id: 'vendor8', name: 'Legal Eagles LLP', email: 'counsel@legaleagles.com', category: 'Legal Services' }
+];
+
+// Message templates
+const messageTemplates = [
+  {
+    id: 'template1',
+    name: 'Order Request',
+    subject: 'New Order Request - [Order Number]',
+    content: 'Dear [Vendor Name],\n\nWe would like to place a new order with the following specifications:\n\n[Order Details]\n\nPlease confirm availability and provide delivery timeline.\n\nBest regards,\n[Your Name]'
+  },
+  {
+    id: 'template2',
+    name: 'Payment Inquiry',
+    subject: 'Payment Status Inquiry - Invoice [Invoice Number]',
+    content: 'Dear [Vendor Name],\n\nI hope this message finds you well. I am writing to inquire about the payment status for Invoice [Invoice Number] dated [Date].\n\nPlease provide an update on the payment processing status.\n\nThank you for your attention to this matter.\n\nBest regards,\n[Your Name]'
+  },
+  {
+    id: 'template3',
+    name: 'Service Request',
+    subject: 'Service Request - [Service Type]',
+    content: 'Dear [Vendor Name],\n\nWe require your services for [Service Description]. Please find the details below:\n\n[Service Requirements]\n\nKindly provide a quote and timeline for completion.\n\nLooking forward to your response.\n\nBest regards,\n[Your Name]'
+  },
+  {
+    id: 'template4',
+    name: 'Contract Renewal',
+    subject: 'Contract Renewal Discussion - [Contract ID]',
+    content: 'Dear [Vendor Name],\n\nOur current contract [Contract ID] is approaching its renewal date. We would like to discuss the renewal terms and any updates to the service agreement.\n\nPlease schedule a meeting at your earliest convenience.\n\nThank you,\n[Your Name]'
+  },
+  {
+    id: 'template5',
+    name: 'Issue Report',
+    subject: 'Issue Report - [Issue Type]',
+    content: 'Dear [Vendor Name],\n\nWe have encountered an issue that requires your immediate attention:\n\n[Issue Description]\n[Steps taken so far]\n[Expected resolution]\n\nPlease provide your assistance in resolving this matter urgently.\n\nBest regards,\n[Your Name]'
+  },
+  {
+    id: 'template6',
+    name: 'Meeting Request',
+    subject: 'Meeting Request - [Meeting Purpose]',
+    content: 'Dear [Vendor Name],\n\nI would like to schedule a meeting to discuss [Meeting Purpose]. \n\nProposed dates and times:\n- [Option 1]\n- [Option 2]\n- [Option 3]\n\nPlease let me know your availability.\n\nBest regards,\n[Your Name]'
+  }
+];
+
 // Mock data - Updated with proper sent messages
 let messages = [
   // Inbox messages (existing)
@@ -145,6 +197,15 @@ let messages = [
   }
 ];
 
+// API Routes for vendors and templates
+app.get('/api/vendors', (req, res) => {
+  res.json(vendors);
+});
+
+app.get('/api/templates', (req, res) => {
+  res.json(messageTemplates);
+});
+
 // API Routes - Updated to handle message types
 app.get('/api/messages', (req, res) => {
   const { filter = 'all', search = '', type = 'inbox' } = req.query;
@@ -226,12 +287,24 @@ app.patch('/api/messages/:id/unread', (req, res) => {
 
 app.post('/api/messages', (req, res) => {
   try {
-    const { recipient, subject, content, priority = 'medium' } = req.body;
+    const { recipient, vendorId, subject, content, priority = 'medium' } = req.body;
 
     // Validation
     const errors = [];
     
-    if (!recipient || !recipient.trim()) {
+    let recipientEmail = recipient;
+    let recipientName = recipient;
+    
+    // If vendorId is provided, find the vendor
+    if (vendorId) {
+      const vendor = vendors.find(v => v.id === vendorId);
+      if (!vendor) {
+        errors.push('Invalid vendor selected');
+      } else {
+        recipientEmail = vendor.email;
+        recipientName = vendor.name;
+      }
+    } else if (!recipient || !recipient.trim()) {
       errors.push('Recipient is required');
     } else if (!/\S+@\S+\.\S+/.test(recipient.trim())) {
       errors.push('Please enter a valid email address');
@@ -260,7 +333,8 @@ app.post('/api/messages', (req, res) => {
     const newMessage = {
       id: uuidv4(),
       sender: 'You',
-      recipient: recipient.trim(),
+      recipient: vendorId ? recipientName : recipient.trim(),
+      recipientEmail: recipientEmail,
       subject: subject.trim(),
       preview: content.trim().substring(0, 100) + (content.trim().length > 100 ? '...' : ''),
       content: content.trim(),

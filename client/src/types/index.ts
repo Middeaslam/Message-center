@@ -9,6 +9,7 @@ export interface Message {
   isRead: boolean;
   hasAttachment: boolean;
   recipient?: string;
+  recipientEmail?: string;
 }
 
 export interface ApiResponse {
@@ -18,10 +19,25 @@ export interface ApiResponse {
 }
 
 export interface NewMessageData {
-  recipient: string;
+  recipient?: string;
+  vendorId?: string;
   subject: string;
   content: string;
   priority?: 'high' | 'medium' | 'low';
+}
+
+export interface Vendor {
+  id: string;
+  name: string;
+  email: string;
+  category: string;
+}
+
+export interface MessageTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  content: string;
 }
 
 export interface MessagesState {

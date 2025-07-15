@@ -1,4 +1,4 @@
-import { ApiResponse, Message, NewMessageData } from '../types';
+import { ApiResponse, Message, MessageTemplate, NewMessageData, Vendor } from '../types';
 
 import axios from 'axios';
 
@@ -60,4 +60,14 @@ export const sendMessage = async (
 
 export const deleteMessage = async (id: string): Promise<void> => {
   await api.delete(`/messages/${id}`);
+};
+
+export const getVendors = async (): Promise<Vendor[]> => {
+  const response = await api.get('/vendors');
+  return response.data;
+};
+
+export const getMessageTemplates = async (): Promise<MessageTemplate[]> => {
+  const response = await api.get('/templates');
+  return response.data;
 };
