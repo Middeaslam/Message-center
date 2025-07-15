@@ -225,24 +225,65 @@ app.patch('/api/messages/:id/unread', (req, res) => {
 });
 
 app.post('/api/messages', (req, res) => {
-  const { recipient, subject, content, priority = 'medium' } = req.body;
+  try {
+    const { recipient, subject, content, priority = 'medium' } = req.body;
 
-  const newMessage = {
-    id: uuidv4(),
-    sender: 'You',
-    recipient,
-    subject,
-    preview: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
-    content,
-    priority,
-    timestamp: new Date().toISOString(),
-    isRead: true,
-    hasAttachment: false,
-    type: 'sent'
-  };
+    // Validation
+    const errors = [];
+    
+    if (!recipient || !recipient.trim()) {
+      errors.push('Recipient is required');
+    } else if (!/\S+@\S+\.\S+/.test(recipient.trim())) {
+      errors.push('Please enter a valid email address');
+    }
+    
+    if (!subject || !subject.trim()) {
+      errors.push('Subject is required');
+    }
+    
+    if (!content || !content.trim()) {
+      errors.push('Message content is required');
+    }
+    
+    if (!['high', 'medium', 'low'].includes(priority)) {
+      errors.push('Invalid priority level');
+    }
 
-  messages.unshift(newMessage);
-  res.status(201).json(newMessage);
+    if (errors.length > 0) {
+      return res.status(400).json({ 
+        error: 'Validation failed', 
+        details: errors 
+      });
+    }
+
+    // Create the new message
+    const newMessage = {
+      id: uuidv4(),
+      sender: 'You',
+      recipient: recipient.trim(),
+      subject: subject.trim(),
+      preview: content.trim().substring(0, 100) + (content.trim().length > 100 ? '...' : ''),
+      content: content.trim(),
+      priority,
+      timestamp: new Date().toISOString(),
+      isRead: true,
+      hasAttachment: false,
+      type: 'sent'
+    };
+
+    // Add to messages array
+    messages.unshift(newMessage);
+    
+    console.log(`New message created: ${newMessage.subject} to ${newMessage.recipient}`);
+    
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.error('Error creating message:', error);
+    res.status(500).json({ 
+      error: 'Internal server error', 
+      message: 'Failed to create message' 
+    });
+  }
 });
 
 app.delete('/api/messages/:id', (req, res) => {

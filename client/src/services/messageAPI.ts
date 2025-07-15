@@ -9,6 +9,19 @@ const api = axios.create({
   timeout: 10000
 });
 
+// Response interceptor to handle errors consistently
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.data) {
+      // If the server returned an error response, throw the server's error message
+      throw error.response.data;
+    }
+    // Otherwise, throw the original error
+    throw error;
+  }
+);
+
 export const getMessages = async (
   filter?: string,
   search?: string,
